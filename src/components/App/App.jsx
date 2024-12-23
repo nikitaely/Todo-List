@@ -1,17 +1,20 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 
-import Header from '../Header';
-import TodoList from '../TaskList';
-import Footer from '../Footer';
-import './App.css';
+import Header from "../Header";
+import TodoList from "../TaskList";
+import Footer from "../Footer";
+import "./App.css";
 
 export default class App extends Component {
   maxId = 1;
 
   state = {
-    todoData: [this.createTaskObject('fw'), this.createTaskObject('fw')],
-    renderData: () => this.state.todoData.filter((el) => this.filterTask(this.state.filter, el)),
-    filter: 'all',
+    todoData: [this.createTaskObject("fw"), this.createTaskObject("fw")],
+    renderData: () =>
+      this.state.todoData.filter((el) =>
+        this.filterTask(this.state.filter, el)
+      ),
+    filter: "all",
   };
 
   onDeleted = (id) => {
@@ -25,18 +28,64 @@ export default class App extends Component {
     });
   };
 
-  createTaskObject(task, timer) {
-    return { task, id: this.maxId++, date: Date.now(), timer: timer ? timer : 1000 * 60 * 15 };
+  createTaskObject(task, timer = 1000 * 60 * 15) {
+    return {
+      id: this.maxId++,
+      task,
+      date: Date.now(),
+      timer,
+      edit: false,
+      paused: true,
+      completed: false,
+    };
   }
 
   editTask = (taskId, value) => {
     this.setState(({ todoData }) => {
       let newData = JSON.parse(JSON.stringify(todoData));
-      let task = newData.find((el) => el.id == taskId);
+      let task = newData.find((el) => el.id === taskId);
       task.task = value;
       return {
         todoData: newData,
       };
+    });
+  };
+
+  toggleEdit = (id) => {
+    this.setState(({ todoData }) => {
+      const newTodoData = todoData.map((task) =>
+        task.id === id ? { ...task, edit: !task.edit } : task
+      );
+      return { todoData: newTodoData };
+    });
+  };
+
+  playTimer = (id) => {
+    this.setState(({ todoData }) => {
+      const newTodoData = todoData.map((task) =>
+        task.id === id ? { ...task, paused: false } : task
+      );
+      return { todoData: newTodoData };
+    });
+  };
+
+  pauseTimer = (id) => {
+    this.setState(({ todoData }) => {
+      const newTodoData = todoData.map((task) =>
+        task.id === id ? { ...task, paused: true } : task
+      );
+      return { todoData: newTodoData };
+    });
+  };
+
+  updateTimer = (id) => {
+    this.setState(({ todoData }) => {
+      const newTodoData = todoData.map((task) =>
+        task.id === id && task.timer > 0
+          ? { ...task, timer: task.timer - 1000 }
+          : task
+      );
+      return { todoData: newTodoData };
     });
   };
 
@@ -51,7 +100,7 @@ export default class App extends Component {
       this.setState(({ todoData }) => {
         const newTodoData = JSON.parse(JSON.stringify(todoData));
         newTodoData.push(this.createTaskObject(e.target[0].value, timer));
-        for (let target of e.target) target.value = '';
+        for (let target of e.target) target.value = "";
         return {
           todoData: newTodoData,
         };
@@ -79,14 +128,14 @@ export default class App extends Component {
 
   filterTask(filter, element) {
     switch (filter) {
-      case 'all':
+      case "all":
         return true;
-      case 'active':
+      case "active":
         return !element.completed;
-      case 'completed':
+      case "completed":
         return element.completed;
       default:
-        throw new Error('Wrong Filter');
+        throw new Error("Wrong Filter");
     }
   }
 
@@ -104,6 +153,10 @@ export default class App extends Component {
             onDeleted={this.onDeleted}
             setCompleted={this.setCompleted}
             editTask={this.editTask}
+            toggleEdit={this.toggleEdit}
+            playTimer={this.playTimer}
+            pauseTimer={this.pauseTimer}
+            updateTimer={this.updateTimer}
           />
           <Footer
             showFilter={this.showFilter}
